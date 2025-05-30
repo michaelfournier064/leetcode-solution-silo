@@ -32,16 +32,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtest-dev cmake
           cd /usr/src/gtest
-          sudo cmake . -DBUILD_SHARED_LIBS=OFF  # Ensure static libraries are built
+          sudo cmake . -DBUILD_SHARED_LIBS=OFF -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=/usr/src/gtest/lib  # Specify output directory
           sudo make
           # Verify that the libraries are created
-          if [ ! -f libgtest.a ] || [ ! -f libgtest_main.a ]; then
+          if [ ! -f /usr/src/gtest/lib/libgtest.a ] || [ ! -f /usr/src/gtest/lib/libgtest_main.a ]; then
             echo "GTest static libraries not found. Build may have failed." >&2
-            ls -al /usr/src/gtest  # Debugging: List contents of directory
+            ls -al /usr/src/gtest/lib  # Debugging: List contents of directory
             exit 1
           fi
           # Copy the static libraries to the appropriate location
-          sudo cp libgtest*.a /usr/lib
+          sudo cp /usr/src/gtest/lib/libgtest*.a /usr/lib
 
       - name: Install GTest (macOS)
         if: runner.os == 'macOS'
