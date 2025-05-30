@@ -34,7 +34,6 @@ jobs:
           cd /usr/src/gtest
           sudo cmake .
           sudo make
-          # Ensure the libraries are copied correctly
           sudo cp libgtest.a /usr/lib/libgtest.a
           sudo cp libgtest_main.a /usr/lib/libgtest_main.a
 
@@ -44,12 +43,22 @@ jobs:
           brew update
           brew install googletest cmake
 
+      - name: Verify GTest Installation
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            ls /opt/homebrew/include/gtest || ls /usr/local/include/gtest
+          elif [ "$RUNNER_OS" = "Linux" ]; then
+            ls /usr/include/gtest
+          fi
+
       - name: Configure CMake
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/gtest-install"
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            cmake -S . -B build -DCMAKE_PREFIX_PATH="/opt/homebrew;/usr/local"
           else
-            cmake -S . -B build
+            cmake -S . -B build -DCMAKE_PREFIX_PATH="/usr"
           fi
         shell: bash
 
