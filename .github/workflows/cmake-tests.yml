@@ -34,8 +34,17 @@ jobs:
           cd /usr/src/gtest
           sudo cmake .
           sudo make
-          sudo cp libgtest.a /usr/lib/libgtest.a
-          sudo cp libgtest_main.a /usr/lib/libgtest_main.a
+
+          if [ -f lib/libgtest.a ] && [ -f lib/libgtest_main.a ]; then
+            sudo cp lib/libgtest.a lib/libgtest_main.a /usr/lib
+          elif [ -f libgtest.a ] && [ -f libgtest_main.a ]; then
+            sudo cp libgtest.a libgtest_main.a /usr/lib
+          else
+            echo "Error: Static libraries not found in /usr/src/gtest or /usr/src/gtest/lib after build."
+            ls -la /usr/src/gtest
+            ls -la /usr/src/gtest/lib || true
+            exit 1
+          fi
 
       - name: Install GTest (macOS)
         if: runner.os == 'macOS'
@@ -43,22 +52,12 @@ jobs:
           brew update
           brew install googletest cmake
 
-      - name: Verify GTest Installation
-        run: |
-          if [ "$RUNNER_OS" = "macOS" ]; then
-            ls /opt/homebrew/include/gtest || ls /usr/local/include/gtest
-          elif [ "$RUNNER_OS" = "Linux" ]; then
-            ls /usr/include/gtest
-          fi
-
       - name: Configure CMake
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/gtest-install"
-          elif [ "$RUNNER_OS" = "macOS" ]; then
-            cmake -S . -B build -DCMAKE_PREFIX_PATH="/opt/homebrew;/usr/local"
           else
-            cmake -S . -B build -DCMAKE_PREFIX_PATH="/usr"
+            cmake -S . -B build
           fi
         shell: bash
 
