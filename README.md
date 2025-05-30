@@ -32,14 +32,12 @@ A curated collection of my personal solutions for LeetCode problems. For detaile
      ```  
 
    - **Google Test**  
-     Option A: Install from package  
+     Install from package  
 
      ```bash
      sudo apt install libgtest-dev
      cd /usr/src/gtest && sudo cmake . && sudo make install
      ```  
-
-     Option B: Use CMake FetchContent (configured in `CMakeLists.txt`).
 
 3. **Configure and build**  
 
@@ -59,7 +57,7 @@ A curated collection of my personal solutions for LeetCode problems. For detaile
 - **Run a specific test executable**  
 
   ```bash
-  ./build/cpp/two_sum.test
+  ./build/cpp/two_sum_test
   ```
 
 ## Contributing
