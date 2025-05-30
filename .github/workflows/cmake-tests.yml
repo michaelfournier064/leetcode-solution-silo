@@ -32,9 +32,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtest-dev cmake
           cd /usr/src/gtest
-          sudo cmake .
+          sudo cmake . -DBUILD_SHARED_LIBS=ON  # Explicitly set shared libs as needed
           sudo make
-          sudo cp *.a /usr/lib  # Ensure libraries are copied
+          if [ -f libgtest.a ] && [ -f libgtest_main.a ]; then
+            sudo cp libgtest*.a /usr/lib  # Copy both static libraries
+          else
+            echo "GTest static libraries not found. Build may have failed." >&2
+            exit 1
+          fi
 
       - name: Install GTest (macOS)
         if: runner.os == 'macOS'
