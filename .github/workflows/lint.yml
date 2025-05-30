@@ -1,0 +1,30 @@
+name: Lint & Format
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format clang-tidy cmake python3-pip
+          pip3 install pre-commit
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+      - name: Check formatting with clang-format
+        run: |
+          git ls-files "*.cpp" "*.h" | xargs clang-format --dry-run --Werror
+      - name: Run clang-tidy
+        run: |
+          mkdir -p build
+          cd build
+          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+          cd ..
+          git ls-files "*.cpp" | xargs -I{} clang-tidy {} -- -p build

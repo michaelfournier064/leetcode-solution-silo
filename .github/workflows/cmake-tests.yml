@@ -1,0 +1,68 @@
+name: CMake Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v1
+
+      - name: Install GTest (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/google/googletest.git C:\googletest
+          mkdir C:\gtest-build
+          cd C:\gtest-build
+          cmake C:\googletest -DCMAKE_INSTALL_PREFIX=C:\gtest-install -DBUILD_GMOCK=ON -DBUILD_GTEST=ON -Dgtest_force_shared_crt=ON -DINSTALL_GTEST=ON
+          cmake --build . --target install
+
+      - name: Install GTest (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtest-dev cmake
+          cd /usr/src/gtest
+          sudo cmake .
+          sudo make
+
+          if [ -f lib/libgtest.a ] && [ -f lib/libgtest_main.a ]; then
+            sudo cp lib/libgtest.a lib/libgtest_main.a /usr/lib
+          elif [ -f libgtest.a ] && [ -f libgtest_main.a ]; then
+            sudo cp libgtest.a lib/gtest_main.a /usr/lib
+          else
+            echo "Error: Static libraries not found in /usr/src/gtest or /usr/src/gtest/lib after build."
+            ls -la /usr/src/gtest
+            ls -la /usr/src/gtest/lib || true
+            exit 1
+          fi
+
+      - name: Install GTest (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install googletest cmake
+
+      - name: Configure CMake
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/gtest-install"
+          else
+            cmake -S . -B build
+          fi
+        shell: bash
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run CMake Tests
+        run: ctest --test-dir build --output-on-failure
