@@ -12,20 +12,15 @@ target_include_directories(two_sum_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# 3) Your test executable
-add_executable(two_sum_test
-  two_sum.test.cpp
-)
-
-# 4) Link both your library **and** GTest’s main
-find_package(GTest CONFIG REQUIRED)
-target_link_libraries(two_sum_test
-  PRIVATE
-    two_sum_lib
-    GTest
-)
-
+# 3) Find GoogleTest and include its CMake functions
+find_package(GTest REQUIRED)
 include(GoogleTest)
+
+# 4) Your test executable
+add_executable(two_sum_test two_sum.test.cpp)
+target_link_libraries(two_sum_test PRIVATE GTest::gtest_main two_sum_lib)
+
+# 5) Register your test executable with CTest
 gtest_discover_tests(two_sum_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
