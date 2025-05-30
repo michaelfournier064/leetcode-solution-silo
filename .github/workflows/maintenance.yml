@@ -1,0 +1,25 @@
+name: Weekly Maintenance
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # every Monday at 00:00 UTC
+
+jobs:
+  tidy-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy
+      - name: Run clang-tidy
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          cd ..
+          git ls-files "*.cpp" | xargs -I{} clang-tidy {} -- -p build > clang-tidy-report.txt || true
+      - name: Upload clang-tidy report
+        uses: actions/upload-artifact@v3
+        with:
+          name: clang-tidy-report
+          path: clang-tidy-report.txt

@@ -1,0 +1,73 @@
+name: CMake Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v1
+
+      - name: Install GTest (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/google/googletest.git C:\googletest
+          mkdir C:\gtest-build
+          cd C:\gtest-build
+          cmake C:\googletest -DCMAKE_INSTALL_PREFIX=C:\gtest-install -DBUILD_GMOCK=ON -DBUILD_GTEST=ON -Dgtest_force_shared_crt=ON -DINSTALL_GTEST=ON
+          cmake --build . --target install
+
+      - name: Install GTest (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtest-dev cmake
+          cd /usr/src/gtest
+          sudo cmake . -DBUILD_SHARED_LIBS=OFF -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=/usr/src/gtest/lib  # Specify output directory
+          sudo make
+          # Verify that the libraries are created
+          if [ ! -f /usr/src/gtest/lib/libgtest.a ] || [ ! -f /usr/src/gtest/lib/libgtest_main.a ]; then
+            echo "GTest static libraries not found. Build may have failed." >&2
+            ls -al /usr/src/gtest/lib  # Debugging: List contents of directory
+            exit 1
+          fi
+          # Copy the static libraries to the appropriate location
+          sudo cp /usr/src/gtest/lib/libgtest*.a /usr/lib
+
+      - name: Install GTest (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install googletest cmake
+          LIB_DIR=$(brew --prefix googletest)/lib
+          if [ -d "$LIB_DIR" ]; then
+            sudo mkdir -p /usr/local/lib
+            sudo cp "$LIB_DIR"/*.a /usr/local/lib
+          else
+            echo "GTest libraries not found in expected location: $LIB_DIR" >&2
+            exit 1
+          fi
+
+      - name: Configure CMake
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cmake -S . -B build -DCMAKE_PREFIX_PATH="C:/gtest-install"
+          else
+            cmake -S . -B build -DCMAKE_PREFIX_PATH="/usr/local;/usr"
+          fi
+        shell: bash
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run CMake Tests
+        run: ctest --test-dir build --output-on-failure
