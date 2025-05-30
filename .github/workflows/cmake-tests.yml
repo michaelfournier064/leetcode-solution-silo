@@ -34,17 +34,9 @@ jobs:
           cd /usr/src/gtest
           sudo cmake .
           sudo make
-
-          if [ -f lib/libgtest.a ] && [ -f lib/libgtest_main.a ]; then
-            sudo cp lib/libgtest.a lib/libgtest_main.a /usr/lib
-          elif [ -f libgtest.a ] && [ -f libgtest_main.a ]; then
-            sudo cp libgtest.a lib/gtest_main.a /usr/lib
-          else
-            echo "Error: Static libraries not found in /usr/src/gtest or /usr/src/gtest/lib after build."
-            ls -la /usr/src/gtest
-            ls -la /usr/src/gtest/lib || true
-            exit 1
-          fi
+          # Ensure the libraries are copied correctly
+          sudo cp libgtest.a /usr/lib/libgtest.a
+          sudo cp libgtest_main.a /usr/lib/libgtest_main.a
 
       - name: Install GTest (macOS)
         if: runner.os == 'macOS'
