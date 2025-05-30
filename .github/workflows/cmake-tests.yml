@@ -46,8 +46,14 @@ jobs:
         run: |
           brew update
           brew install googletest cmake
-          sudo mkdir -p /usr/local/lib
-          sudo cp /usr/local/Cellar/googletest/*/lib/*.a /usr/local/lib # Ensure libraries are in the correct path
+          LIB_DIR=$(brew --prefix googletest)/lib
+          if [ -d "$LIB_DIR" ]; then
+            sudo mkdir -p /usr/local/lib
+            sudo cp "$LIB_DIR"/*.a /usr/local/lib
+          else
+            echo "GTest libraries not found in expected location: $LIB_DIR" >&2
+            exit 1
+          fi
 
       - name: Configure CMake
         run: |
