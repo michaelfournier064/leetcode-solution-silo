@@ -5,7 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Try to find the MSYS2-installed GTest first
-find_package(GTest CONFIG)
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+link_directories(${GTEST_LIBRARY_DIRS})
 
 message(STATUS "Using system GTest: ${GTest_VERSION}")
 
